@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
-//const {link} = require('../Config/config.js');
 const Schema=mongoose.Schema;
-mongoose.set('useFindAndModify', false);
-mongoose.connect(link,{ useNewUrlParser: true,useUnifiedTopology: true });
+
 const mybooks = new Schema({
     bookId:{type:String},
     start:{type:Boolean,default:false},
@@ -32,7 +30,8 @@ const Books_schema = new Schema({
     copies:{type:Number,default:0},
     finish:{type:Number,default:0},
     pages:{type:Number,default:0},
-    description:{type:String}
+    description:{type:String},
+    state:{type:Boolean,default:true}
 });
 const Books = mongoose.model("Books",Books_schema);
 const booksAuthor_schema=new Schema({
