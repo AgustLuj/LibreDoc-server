@@ -1,13 +1,10 @@
 const {response} = require('express');
-const {User,Books} = require('../models/schemaBook');
 const path = require("path"); 
 const fs = require("fs-extra");
 const { PDFDocument } = require('pdf-lib');
-const querystring = require('querystring');
-const { rejects } = require('assert');
-const { createFile } = require('../helpers/createFile');
 
-const dirO = __dirname.slice(0,-6)
+const {User,Books} = require('../models/schemaBook');
+const { createFile } = require('../helpers/createFile');
 
 const rootUser = (req,res=response)=>{
     res.status(200).json({err:false})
@@ -207,17 +204,30 @@ const userReadIdGet = async(req,res=response)=>{
     }
 }
 
-module.exports={
-    rootUser,
-    loginPost,
-    registerPost,
-    bookReadingPost,
-    bookReadPost,
-    userReadIdGet
-}
-const a = async(req,res=response)=>{
+const userUpdatePageIdPost = async(req,res=response)=>{
     try {
         
+        let {user:username,id} = req.params;
+        let {pages=1} = req.body;
+
+        let user = await User.findOne({username});
+        
+        let {mybooks} = user
+        if(user){
+            let i = mybooks.findIndex(({bookId})=>bookId === id)
+            let {currentPage} = mybooks[i];
+            
+            if(currentPage+pages <= 0){
+                mybooks[i].currentPage=0;
+            }else{
+                mybooks[i].currentPage+=pages;
+            }
+            await user.save();
+            return res.status(200).json({err:false})
+        }else{
+            return res.status(400).json({err:true})
+        }
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -225,3 +235,196 @@ const a = async(req,res=response)=>{
         })  
     }
 }
+
+const setVotePost = async(req,res=response)=>{
+    try {
+        let {user:username,id} = req.params;
+        let {vote} = req.body;
+        //console.log(pages);
+        let user = User.findOne({username,'mybooks.bookId':id})
+        if(user){
+
+            let i = user.mybooks.findIndex(({bookId})=>bookId === id)
+            user.mybooks[i].stars=vote;
+            user.mybooks[i].start=false;
+            user.mybooks[i].vote=true;
+
+            await user.save();
+
+            res.status(200).json({err:false});
+
+        }else{
+            return res.status(400).json({msg:'No se encontraron el usuario'}); 
+        }  
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+
+const userAddIdPost = async(req,res=response)=>{
+    try {
+        
+        let {id:_id,user:username} = req.params;
+
+        let user = await User.findOne({username});
+        let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
+        let book = await Books.findById({_id});
+        if(i == -1){
+            if(book){
+                let newBook ={
+                    bookId:book._id,
+                    favorite:false,
+                    biblio:true,
+                }
+                user.mybooks.push(newBook);
+                user.booksCount+=1;
+
+                let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
+                await user.save();
+                return res.status(200).json({biblio:user.mybooks[i].biblio});
+            }
+        }else{
+            let {disable,biblio} = user.mybooks[i];
+            if(!disable){
+                if(!biblio){
+                    user.mybooks[i].biblio = true;
+                }else{
+                    user.mybooks[i].biblio = false;
+                }
+                await user.save()
+                return res.status(200).json({biblio:user.mybooks[i].biblio});
+            }else{
+                return res.status(404).json({msg:'Error Desconocido, contactar con el admin'}) 
+            }
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+
+const userFavIdPost = async(req,res=response)=>{
+    try {
+        
+        let {id:_id,user:username} = req.params;
+
+        let user = await User.findOne({username});
+        let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
+        let book = await Books.findById({_id});
+        if(i == -1){
+            if(book){
+                let newBook ={
+                    bookId:book._id,
+                    favorite:true,
+                    biblio:false,
+                }
+                user.mybooks.push(newBook);
+                user.booksCount+=1;
+
+                let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
+                await user.save();
+                return res.status(200).json({favorite:user.mybooks[i].favorite});
+            }
+        }else{
+            let {disable,favorite} = user.mybooks[i];
+            if(!disable){
+                if(favorite){
+                    user.mybooks[i].favorite = false;
+                }else{
+                    user.mybooks[i].favorite = true;
+                }
+                //await user.save()
+                return res.status(200).json({favorite:user.mybooks[i].favorite});
+            }else{
+                return res.status(404).json({msg:'Error Desconocido, contactar con el admin'}) 
+            }
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+const userSearchIdPost = async(req,res=response)=>{
+    try {
+        
+        let {id,user:username} = req.params;
+        let user = User.findOne({username,'mybooks.bookId':id})
+        if(user){
+            let i = user.mybooks.findIndex(({bookId})=>bookId === id)
+
+            let {favorite,biblio,disable}=user.mybooks[i]
+            if(!disable){
+                res.status(200).json({favorite,biblio});
+            }
+        }
+        return res.status(200).json({favorite:false,biblio:false});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+
+const userGetFinishIdPost = async(req,res=response)=>{
+    try {
+        
+        let {id,user:username} = req.params;
+        let {mybooks} = User.findOne({username,'mybooks.bookId':id});
+
+        if(mybooks){
+            let i = mybooks.findIndex(({bookId})=>bookId === id)
+
+            let {finish}=mybooks[i];
+
+            if(finish){
+                return res.status(200).json({finish});
+            }else{
+                return res.status(200).json({finish});
+            }
+        }else{
+            return res.status(200).json({err:true});
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+
+const userReadAgainIdPost = async(req,res=response)=>{
+    try {
+        let {id,user:username} = req.params;
+        let user = User.findOne({username,'mybooks.bookId':id});
+        let {mybooks} = user;
+         if(user != null){
+            let i = mybooks.findIndex(({bookId})=>bookId === id)
+            mybooks[i].finish = false;
+            mybooks[i].start = true,
+            mybooks[i].currentPage=0;
+            await user.save();
+            return res.status(200).json({err:false});
+        }else{
+            return res.status(400).json({err:true});
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            msg:'Error Desconocido, contactar con el admin'
+        })  
+    }
+}
+
+module.exports={rootUser,loginPost,registerPost,bookReadingPost,bookReadPost,userReadIdGet,userUpdatePageIdPost,setVotePost,userAddIdPost,userFavIdPost,userSearchIdPost,userGetFinishIdPost,userReadAgainIdPost}
