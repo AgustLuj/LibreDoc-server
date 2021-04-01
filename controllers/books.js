@@ -123,7 +123,6 @@ const favUserBookPost = async(req,res= response) =>{
 const fotoIdGet = async(req,res= response)=>{
     try {
         let _id = req.params.id;
-        
         let {imgName} = await Books.findById({_id});
         if(imgName){
             res.setHeader('Content-type', 'image/png');
@@ -134,7 +133,7 @@ const fotoIdGet = async(req,res= response)=>{
             }catch(e){
                 console.log(e);
             }
-            return res.json(data);
+            return res.send(data);
         }
         return res.status(400).json({msg:'No se encontraron libros'}); 
 

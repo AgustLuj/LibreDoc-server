@@ -15,7 +15,7 @@ const mybooks = new Schema({
 });
 const userSchema = new Schema({
     username:{type:String,maxlength:[50,"Username muy grande"]},
-    pass:{type:String,maxlength:[50,"Username muy grande"]},
+    pass:{type:String,maxlength:[100,"Username muy grande"]},
     booksCount:{type:Number,default:0},
     path:{type:String},
     mybooks:[mybooks],

@@ -12,8 +12,6 @@ const { validationQuerry } = require('../middlewares/validationQuerrys');
 
 const { 
     rootUser, 
-    loginPost, 
-    registerPost,
     bookReadingPost,
     bookReadPost,
     userReadIdGet,
@@ -28,20 +26,6 @@ const {
 
 
 router.get('/',rootUser);
-
-router.post('/login',
-    check('username','El username no puede estar vacio').notEmpty(),
-    check('username').custom(existUser),
-    check('pass','La contranseña no puede estar vacia').notEmpty(),
-    validationQuerry
-,loginPost);
-
-router.post('/register',
-    check('username','El username no puede estar vacio').notEmpty(),
-    check('username','El usuario ya esta usado').not().custom(existUser),
-    check('pass','La contranseña no puede estar vacia').notEmpty(),
-    validationQuerry
-,registerPost);
 
 router.post('/:id/bookReading',
     check('id','No es un id valido').isMongoId(),
