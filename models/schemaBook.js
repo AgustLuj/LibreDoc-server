@@ -14,11 +14,13 @@ const mybooks = new Schema({
     vote:{type:Boolean,default:false},
 });
 const userSchema = new Schema({
-    username:{type:String,maxlength:[50,"Username muy grande"]},
+    username:{type:String,maxlength:[50,"Username muy grande"],unique:true},
     pass:{type:String,maxlength:[100,"Username muy grande"]},
     booksCount:{type:Number,default:0},
     path:{type:String},
     mybooks:[mybooks],
+    google:{type:Boolean,default:false},
+    state:{type:Boolean,default:true}
 });
 const User = mongoose.model("Users",userSchema);
 const Books_schema = new Schema({

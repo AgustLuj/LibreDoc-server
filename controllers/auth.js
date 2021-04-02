@@ -7,6 +7,7 @@ const { PDFDocument } = require('pdf-lib');
 const { User,Books } = require('../models/schemaBook');
 const { createFile } = require('../helpers/createFile');
 const { generateJWT } = require('../helpers/generate-jwt');
+const { googleVerify } = require('../helpers/google');
 
 const authLoginPost = async(req= request,res=response)=>{
     try {
@@ -45,22 +46,22 @@ const authRegisterPost = async(req,res=response)=>{
         
         let {pass,username}=req.body;
         pass = pass.toString();
-        let file = await createFile(username);
         
-        if(file){
-            let dir ='/books/users/'+username+'/'+username+'.pdf';
-            let user = new User({
-                username,
-                pass,
-                path:dir,
-            })
-            const salt = bcryptjs.genSaltSync();
-            user.pass = bcryptjs.hashSync( pass, salt );
+        let dir ='/books/users/'+username+'/'+username+'.pdf';
+        let user = new User({
+            username,
+            pass,
+            path:dir,
+        })
+        const salt = bcryptjs.genSaltSync();
+        user.pass = bcryptjs.hashSync( pass, salt );
 
-            let save = await user.save();
+        let save = await user.save();
 
-            if(save){
-
+        if(save){
+            let file = await createFile(username);
+            
+            if(file){
                 let dirfull = path.join(__dirname,`..${dir}`);
                 
                 let doc = await PDFDocument.create();    
@@ -76,6 +77,7 @@ const authRegisterPost = async(req,res=response)=>{
             return res.status(400).json({'msg':'No se pudo completar el registro'}); 
         }
         return res.status(400).json({'msg':'No se pudo completar el registro'}); 
+        
 
     } catch (error) {
         console.trace(error);
@@ -84,8 +86,60 @@ const authRegisterPost = async(req,res=response)=>{
         })  
     }
 }
+const authGooglePost = async(req,res)=>{
+    const {idToken} =req.body;
+    //console.log(idToken);
+    try {
 
+        const {email} = await googleVerify(idToken);
+        username = email.split('@')[0];
+        let user = await User.findOne({username});
+        if(!user){
+            
+            let dir ='/books/users/'+username+'/'+username+'.pdf';
+            user  = new User({
+                username:username,
+                pass:':$',
+                google:true,
+                path:dir
+            })
+
+            await user.save();
+
+            let file = await createFile(username);
+            
+            if(file){
+
+                const token = await generateJWT(user._id);
+                console.log(user)
+                return res.status(200).json({username,token});
+            }
+            return res.status(400).json({'msg':'No se pudo completar el registro'}); 
+        }
+        //State == false
+        if(!user.state){
+            return res.status(400).json({
+                "msg":'El usuario no existe'
+            })
+        }
+
+        const token = await generateJWT(user._id);
+
+        return res.status(200).json({username,token});
+        
+    } catch (error) {
+
+        console.log(error);
+        return res.status(500).json({
+            msg:'Token invalido'
+        });
+
+    }
+
+
+}
 module.exports ={
     authLoginPost,
-    authRegisterPost
+    authRegisterPost,
+    authGooglePost
 } 

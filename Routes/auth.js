@@ -3,7 +3,7 @@ const { check } = require('express-validator');
 
 const router = express.Router();
 
-const { authLoginPost, authRegisterPost } = require('../controllers');
+const { authLoginPost, authRegisterPost, authGooglePost } = require('../controllers');
 const { validationQuerry } = require('../middlewares/validationQuerrys');
 
 const { 
@@ -26,6 +26,9 @@ router.post('/register',
     validationQuerry
 ,authRegisterPost);
 
-router.post('/google')
+router.post('/google',
+    check('idToken','El token no puede estar vacio').notEmpty(),
+    validationQuerry
+,authGooglePost);
 
 module.exports = router;
