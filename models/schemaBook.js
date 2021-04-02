@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-const Schema=mongoose.Schema;
+const {Schema,model} = require("mongoose");
 
 const mybooks = new Schema({
     bookId:{type:String},
@@ -22,7 +21,14 @@ const userSchema = new Schema({
     google:{type:Boolean,default:false},
     state:{type:Boolean,default:true}
 });
-const User = mongoose.model("Users",userSchema);
+userSchema.methods.toJSON = function() {
+    const { __v, password, ...usuario  } = this.toObject();
+    return usuario;
+}
+const User = model("Users",userSchema);
+
+
+
 const Books_schema = new Schema({
 	name:{type:String,maxlength:[50,"Username muy grande"]},
     author:{type:String,maxlength:[50,"Username muy grande"]},
@@ -35,7 +41,7 @@ const Books_schema = new Schema({
     description:{type:String},
     state:{type:Boolean,default:true}
 });
-const Books = mongoose.model("Books",Books_schema);
+const Books = model("Books",Books_schema);
 const booksAuthor_schema=new Schema({
     id:{type:String,maxlength:[50,"Username muy grande"]},
     bookName:{type:String,maxlength:[50,"Username muy grande"]}
@@ -45,7 +51,7 @@ const author_schema = new Schema({
     lastname:{type:String,maxlength:[50,"Username muy grande"]},
     books:{booksAuthor_schema},
 })
-const Author = mongoose.model("Author",author_schema);
+const Author = model("Author",author_schema);
 
 module.exports = {
     User,

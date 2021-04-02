@@ -31,7 +31,7 @@ const authLoginPost = async(req= request,res=response)=>{
         /// GENERO EL TOKEN
         const token = await generateJWT(user._id);
         /// ENVIO EL TOKEN
-        return res.status(200).json({login:true,token});
+        return res.status(200).json({username:user.username,token,_id:user._id});
 
     } catch (error) {
         console.trace(error);
@@ -72,7 +72,7 @@ const authRegisterPost = async(req,res=response)=>{
 
                 const token = await generateJWT(user._id);
 
-                return res.status(200).json({username,token});
+                return res.status(200).json({username:user.username,token,_id:user._id});
             }
             return res.status(400).json({'msg':'No se pudo completar el registro'}); 
         }
@@ -86,6 +86,7 @@ const authRegisterPost = async(req,res=response)=>{
         })  
     }
 }
+
 const authGooglePost = async(req,res)=>{
     const {idToken} =req.body;
     //console.log(idToken);
@@ -111,8 +112,7 @@ const authGooglePost = async(req,res)=>{
             if(file){
 
                 const token = await generateJWT(user._id);
-                console.log(user)
-                return res.status(200).json({username,token});
+                return res.status(200).json({username:user.username,token,_id:user._id});
             }
             return res.status(400).json({'msg':'No se pudo completar el registro'}); 
         }
@@ -125,7 +125,7 @@ const authGooglePost = async(req,res)=>{
 
         const token = await generateJWT(user._id);
 
-        return res.status(200).json({username,token});
+        return res.status(200).json({username:user.username,token,_id:user._id});
         
     } catch (error) {
 
@@ -138,6 +138,7 @@ const authGooglePost = async(req,res)=>{
 
 
 }
+
 module.exports ={
     authLoginPost,
     authRegisterPost,

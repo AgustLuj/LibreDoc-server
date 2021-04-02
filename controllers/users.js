@@ -10,72 +10,12 @@ const rootUser = (req,res=response)=>{
     res.status(200).json({err:false})
 }
 
-const loginPost = async(req,res=response)=>{
-    try {
-        let {pass,username}=req.body;
-
-        let user = await User.exists({username,pass})
-
-        if(user){
-            return res.status(200).json({login:true});
-        }else{
-            return res.status(400).json({login:false});
-        }
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            msg:'Error Desconocido, contactar con el admin'
-        })
-    }
-}
-
-const registerPost = async(req,res=response)=>{
-    try {
-        
-        let {pass,username}=req.body;
-        let file = await createFile(username);
-        
-        if(file){
-            let dir ='/books/users/'+username+'/'+username+'.pdf';
-            let user = new User({
-                username,
-                pass,
-                path:dir,
-            })
-            let save = await user.save();
-            if(save){
-
-                let dirfull = path.join(__dirname,`..${dir}`);
-                
-                let doc = await PDFDocument.create();    
-
-                doc.addPage();
-
-                fs.writeFileSync(dirfull, await doc.save());
-
-                return res.status(200).json({username});
-            }
-            return res.status(400).json({msg:'No se pudo completar el registro'}); 
-        }
-        return res.status(400).json({msg:'No se pudo completar el registro'}); 
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            msg:'Error Desconocido, contactar con el admin'
-        })  
-    }
-}
-
 const bookReadingPost  = async(req,res=response)=>{
     try {
         
-        let {id:_id} = req.params;
-        
+        let {mybooks}=req.user
         const bookReading=[];
-
-        let {mybooks} = await User.findById({_id});
+       
         if(mybooks){
             for(let {start,currentPage,bookId} of mybooks){
                 if(start){
@@ -98,11 +38,9 @@ const bookReadingPost  = async(req,res=response)=>{
 const bookReadPost = async(req,res=response)=>{
     try {
        
-        let {id:_id} = req.params;
-        
+        let {mybooks}=req.user
         const bookReading=[];
 
-        let {mybooks} = await User.findById({_id});
         if(mybooks){
             for(let {finish,bookId,stars,vote} of mybooks){
                 if(finish){
@@ -124,10 +62,9 @@ const bookReadPost = async(req,res=response)=>{
 
 const userReadIdGet = async(req,res=response)=>{
     try {
-        
+        let user = req.user;
         let {user:username,id} = req.params;
-
-        let user = await User.findOne({username});
+        
         let book = await Books.findById({'_id':id});
         if(user && book){
             let {mybooks,booksCount} = user;
@@ -209,11 +146,10 @@ const userUpdatePageIdPost = async(req,res=response)=>{
         
         let {user:username,id} = req.params;
         let {pages=1} = req.body;
-
-        let user = await User.findOne({username});
+        let user=req.user
         
-        let {mybooks} = user
         if(user){
+            let {mybooks}=user
             let i = mybooks.findIndex(({bookId})=>bookId === id)
             let {currentPage} = mybooks[i];
             
@@ -240,8 +176,8 @@ const setVotePost = async(req,res=response)=>{
     try {
         let {user:username,id} = req.params;
         let {vote} = req.body;
-        //console.log(pages);
-        let user = User.findOne({username,'mybooks.bookId':id})
+        let user=req.user;
+
         if(user){
 
             let i = user.mybooks.findIndex(({bookId})=>bookId === id)
@@ -268,8 +204,8 @@ const userAddIdPost = async(req,res=response)=>{
     try {
         
         let {id:_id,user:username} = req.params;
+        let user=req.user
 
-        let user = await User.findOne({username});
         let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
         let book = await Books.findById({_id});
         if(i == -1){
@@ -313,8 +249,7 @@ const userFavIdPost = async(req,res=response)=>{
     try {
         
         let {id:_id,user:username} = req.params;
-
-        let user = await User.findOne({username});
+        let user=req.user
         let i = user.mybooks.findIndex(({bookId})=>bookId === _id)
         let book = await Books.findById({_id});
         if(i == -1){
@@ -339,7 +274,7 @@ const userFavIdPost = async(req,res=response)=>{
                 }else{
                     user.mybooks[i].favorite = true;
                 }
-                //await user.save()
+                await user.save();
                 return res.status(200).json({favorite:user.mybooks[i].favorite});
             }else{
                 return res.status(404).json({msg:'Error Desconocido, contactar con el admin'}) 
@@ -353,17 +288,18 @@ const userFavIdPost = async(req,res=response)=>{
         })  
     }
 }
+
 const userSearchIdPost = async(req,res=response)=>{
     try {
         
         let {id,user:username} = req.params;
-        let user = User.findOne({username,'mybooks.bookId':id})
+        let user=req.user
         if(user){
             let i = user.mybooks.findIndex(({bookId})=>bookId === id)
-
+            
             let {favorite,biblio,disable}=user.mybooks[i]
             if(!disable){
-                res.status(200).json({favorite,biblio});
+                return res.status(200).json({favorite,biblio});
             }
         }
         return res.status(200).json({favorite:false,biblio:false});
@@ -380,20 +316,23 @@ const userGetFinishIdPost = async(req,res=response)=>{
     try {
         
         let {id,user:username} = req.params;
-        let {mybooks} = User.findOne({username,'mybooks.bookId':id});
+        let user=req.user
 
-        if(mybooks){
+        if(user){
+            let {mybooks} = user; 
             let i = mybooks.findIndex(({bookId})=>bookId === id)
-
-            let {finish}=mybooks[i];
-
-            if(finish){
-                return res.status(200).json({finish});
-            }else{
-                return res.status(200).json({finish});
+            if(i != -1){
+                let {finish}=mybooks[i];
+    
+                if(finish){
+                    return res.status(200).json({finish});
+                }else{
+                    return res.status(200).json({finish});
+                }
             }
+            return res.status(400).json({err:true});
         }else{
-            return res.status(200).json({err:true});
+            return res.status(400).json({err:true});
         }
 
     } catch (error) {
@@ -407,7 +346,7 @@ const userGetFinishIdPost = async(req,res=response)=>{
 const userReadAgainIdPost = async(req,res=response)=>{
     try {
         let {id,user:username} = req.params;
-        let user = User.findOne({username,'mybooks.bookId':id});
+        let user=req.user
         let {mybooks} = user;
          if(user != null){
             let i = mybooks.findIndex(({bookId})=>bookId === id)
@@ -427,4 +366,4 @@ const userReadAgainIdPost = async(req,res=response)=>{
     }
 }
 
-module.exports={rootUser,loginPost,registerPost,bookReadingPost,bookReadPost,userReadIdGet,userUpdatePageIdPost,setVotePost,userAddIdPost,userFavIdPost,userSearchIdPost,userGetFinishIdPost,userReadAgainIdPost}
+module.exports={rootUser,bookReadingPost,bookReadPost,userReadIdGet,userUpdatePageIdPost,setVotePost,userAddIdPost,userFavIdPost,userSearchIdPost,userGetFinishIdPost,userReadAgainIdPost}

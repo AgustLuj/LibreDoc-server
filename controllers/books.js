@@ -48,7 +48,6 @@ const idAllBookPost = async(req,res=response)=>{
         let _id = req.params.id;
 
         let book = await Books.findById(_id,'name pages author copies');
-        
         if (book){
             return res.status(200).json(book)
         }
@@ -66,7 +65,7 @@ const biblioUserBookPost = async(req,res=response)=>{
     try {
         let username = req.params.user;
 
-        let {mybooks} = await User.findOne({username});
+        let {mybooks} = req.user;
     
         if (mybooks){
             let books=[];
@@ -94,7 +93,7 @@ const favUserBookPost = async(req,res= response) =>{
     try {
         let username = req.params.user;
         
-        let {mybooks} = await User.findOne({username});
+        let {mybooks} = req.user;
     
         if (mybooks){
             let books=[];

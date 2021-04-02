@@ -9,6 +9,7 @@ const {
 } = require('../helpers/dbValidation');
 
 const { validationQuerry } = require('../middlewares/validationQuerrys');
+const { validarJWT } = require('../middlewares/validationToken');
 
 const { 
     rootUser, 
@@ -27,17 +28,26 @@ const {
 
 router.get('/',rootUser);
 
-router.post('/:id/bookReading',
-    check('id','No es un id valido').isMongoId(),
+router.post('/:user/bookReading',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
+    check('user').custom(existUser),
     validationQuerry
 ,bookReadingPost);
 
-router.post('/:id/bookRead',
-    check('id','No es un id valido').isMongoId(),
+router.post('/:user/bookRead',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
+    check('user').custom(existUser),
     validationQuerry
 ,bookReadPost);
 
 router.get('/:user/read/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -45,6 +55,9 @@ router.get('/:user/read/:id',
 ,userReadIdGet);
 
 router.post('/:user/updatePage/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -53,6 +66,9 @@ router.post('/:user/updatePage/:id',
 ,userUpdatePageIdPost);
 
 router.post('/:user/setVote/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -61,6 +77,9 @@ router.post('/:user/setVote/:id',
 ,setVotePost);
 
 router.post('/:user/add/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -68,6 +87,9 @@ router.post('/:user/add/:id',
 ,userAddIdPost);
 
 router.post('/:user/fav/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -75,6 +97,9 @@ router.post('/:user/fav/:id',
 ,userFavIdPost);
 
 router.post('/:user/search/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -82,6 +107,9 @@ router.post('/:user/search/:id',
 ,userSearchIdPost);
 
 router.post('/:user/getFinish/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT,
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
@@ -89,6 +117,9 @@ router.post('/:user/getFinish/:id',
 ,userGetFinishIdPost);
 
 router.post('/:user/readAgain/:id',
+    check('x-token','Es necesario el token').notEmpty(),
+    check('x-token','Es necesario el token').isJWT(),
+    validarJWT, 
     check('user').custom(existUser),
     check('id','No es un id valido').isMongoId(),
     check('id').custom(existBookId),
