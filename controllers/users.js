@@ -292,11 +292,11 @@ const userFavIdPost = async(req,res=response)=>{
 const userSearchIdPost = async(req,res=response)=>{
     try {
         
-        let {id,user:username} = req.params;
+        let {id} = req.params;
         let user=req.user
-        if(user){
-            let i = user.mybooks.findIndex(({bookId})=>bookId === id)
-            
+        let i = user.mybooks.findIndex(({bookId})=>bookId === id)
+        if(user && i != -1){
+
             let {favorite,biblio,disable}=user.mybooks[i]
             if(!disable){
                 return res.status(200).json({favorite,biblio});
@@ -315,24 +315,19 @@ const userSearchIdPost = async(req,res=response)=>{
 const userGetFinishIdPost = async(req,res=response)=>{
     try {
         
-        let {id,user:username} = req.params;
+        let {id} = req.params;
         let user=req.user
+        let i = user.mybooks.findIndex(({bookId})=>bookId === id)
+        if(user && i != -1){
+            let {finish}=user.mybooks[i];
 
-        if(user){
-            let {mybooks} = user; 
-            let i = mybooks.findIndex(({bookId})=>bookId === id)
-            if(i != -1){
-                let {finish}=mybooks[i];
-    
-                if(finish){
-                    return res.status(200).json({finish});
-                }else{
-                    return res.status(200).json({finish});
-                }
+            if(finish){
+                return res.status(200).json({finish});
+            }else{
+                return res.status(200).json({finish});
             }
-            return res.status(400).json({err:true});
         }else{
-            return res.status(400).json({err:true});
+            return res.status(200).json({finish:false});
         }
 
     } catch (error) {

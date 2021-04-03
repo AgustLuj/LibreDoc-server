@@ -25,7 +25,7 @@ const authLoginPost = async(req= request,res=response)=>{
         const passCompare = bcryptjs.compareSync(pass,user.pass);
         if(!passCompare){
             return res.status(400).json({
-                "msg":'El correo o la contraseña es incorrecta'
+                "msg":'El user o la contraseña es incorrecta'
             })
         }
         /// GENERO EL TOKEN
@@ -119,7 +119,7 @@ const authGooglePost = async(req,res)=>{
         //State == false
         if(!user.state){
             return res.status(400).json({
-                "msg":'El usuario no existe'
+                "msg":'No se pudo completar el registro'
             })
         }
 
